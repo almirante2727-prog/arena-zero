@@ -7915,7 +7915,7 @@ function shoot(){
   for(ti=0;ti<enemies.length;ti++){var pr=enemies[ti].parts;for(k=0;k<pr.length;k++)tgtList.push(pr[k]);}
   hitMap.length=0;
   gun.updateMatrixWorld(true);
-  var pi,tr=0;
+  var pi,trN=0;
   for(pi=0;pi<w.pel;pi++){
     if(w.pel>1){var ang=Math.random()*Math.PI*2,rr=Math.sqrt(Math.random())*w.cone+base;ndc.set(Math.cos(ang)*rr,Math.sin(ang)*rr);}
     else ndc.set((Math.random()*2-1)*base,(Math.random()*2-1)*base);
@@ -7938,9 +7938,9 @@ function shoot(){
     }else{
       endV.copy(ray.ray.direction).multiplyScalar(60).add(ray.ray.origin);
     }
-    if(tr<3){
+    if(trN<3){
       muzzleV.set(MUZZLE[0],MUZZLE[1],MUZZLE[2]);gun.localToWorld(muzzleV);
-      tracer(muzzleV,endV);tr++;
+      tracer(muzzleV,endV);trN++;
     }
   }
   for(k=0;k<hitMap.length;k++){var r2=hitMap[k];if(!r2.e.dead)damageEnemy(r2.e,r2.dmg,r2.pt,r2.crit);}
@@ -8124,8 +8124,8 @@ function update(dt){
     }
   }
   for(var c=0;c<tracers.length;c++){
-    var tr=tracers[c];
-    if(tr.t>0){tr.t-=dt;tr.l.material.opacity=Math.max(0,tr.t/0.07)*0.9;}
+    var trc=tracers[c];
+    if(trc.t>0){trc.t-=dt;trc.l.material.opacity=Math.max(0,trc.t/0.07)*0.9;}
   }
 
   updateShocks(dt);updateGrenades(dt);updateAmbience(dt);
