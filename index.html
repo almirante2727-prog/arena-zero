@@ -331,7 +331,7 @@ body.playing .fsBtn,.cine.on~.fsBtn{display:none}
       <div class="best">Recorde<span id="bestMenu">0</span></div>
       <div class="credit">Criado por Lucas Vanin Sgarbossa com o Claude</div>
       <div class="mono" id="crumbBox" style="font-size:10px;opacity:.5"></div>
-      <div class="mono" style="font-size:10px;opacity:.4">v48</div>
+      <div class="mono" style="font-size:10px;opacity:.4">v49</div>
     </div>
     <div id="pSub" class="stack sub" hidden>
       <div class="eyebrow" id="subEy"></div>
@@ -5423,19 +5423,35 @@ function hiRefresh(){
   var env=typeof envNow!=='undefined'?envNow:null;
   if(env){var rg=hiRT(HIG[env.gr||'conc']);if(floor.material.roughnessMap!==rg){floor.material.roughnessMap=rg;floor.material.roughness=rg?1:0.86;floor.material.needsUpdate=true;}}
 }
+function hiImgLoad(key,url,blob){
+  var im=new Image();im.decoding='async';
+  im.onload=function(){HI.img[key]=im;hiRefresh();if(blob)setTimeout(function(){try{URL.revokeObjectURL(url);}catch(e){}},4000);};
+  im.onerror=function(){};
+  im.src=url;
+}
+function hiFolder(sz){
+  var dir='textures/'+(sz===2?'2k':'1k')+'/';
+  HINAMES.forEach(function(n){['c','n','r'].forEach(function(tg){hiImgLoad(n+'_'+tg,dir+n+'_'+tg+'.jpg',false);});});
+}
+function hiPak(sz){
+  var P='texturas.pak';
+  return fetch(P,{headers:{Range:'bytes=0-65535'}}).then(function(r){if(!r.ok)throw 0;return r.arrayBuffer();}).then(function(buf){
+    var dv=new DataView(buf);if(dv.getUint32(0)!==0x415A504B)throw 0;
+    var hl=dv.getUint32(4),idx=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,8,hl))),ds=8+hl,end=sz===2?idx.__end:idx.__end1k;
+    return fetch(P,{headers:{Range:'bytes='+ds+'-'+(ds+end-1)}}).then(function(r){if(!r.ok)throw 0;return r.arrayBuffer().then(function(b){return{b:b,off:r.status===206?0:ds};});}).then(function(o){
+      HINAMES.forEach(function(n){['c','n','r'].forEach(function(tg){
+        var k=(sz===2&&tg!=='n'?'2k/':'1k/')+n+'_'+tg,e=idx[k];if(!e)return;
+        var blob=new Blob([o.b.slice(o.off+e[0],o.off+e[0]+e[1])],{type:'image/jpeg'}),u=URL.createObjectURL(blob);
+        hiImgLoad(n+'_'+tg,u,true);
+      });});
+    });
+  });
+}
 function hiLoad(){
   var sz=hiSize();
   if(!sz||HI.size>=sz||location.protocol==='file:')return;
   HI.size=sz;
-  var dir='textures/'+(sz===2?'2k':'1k')+'/';
-  HINAMES.forEach(function(n){
-    ['c','n','r'].forEach(function(tg){
-      var im=new Image();im.decoding='async';
-      im.onload=function(){HI.img[n+'_'+tg]=im;hiRefresh();};
-      im.onerror=function(){};
-      im.src=dir+n+'_'+tg+'.jpg';
-    });
-  });
+  try{hiPak(sz).catch(function(){hiFolder(sz);});}catch(e){hiFolder(sz);}
 }
 function setArena(a){
   A=a;ROOMZ=-A-4.8;roomG.position.z=ROOMZ-ROOMZ0;
